@@ -1,0 +1,216 @@
+---
+title: "Resume"
+author: Sumana Giri
+date: "`r Sys.Date()`"
+output:
+  pagedown::html_resume:
+    # set it to true for a self-contained HTML page but it'll take longer to render
+    self_contained: false
+# uncomment this line to produce HTML and PDF in RStudio:
+knit: pagedown::chrome_print
+
+---
+
+```{css, echo=FALSE}
+
+:root {
+  --root-font-size: 9.5pt;
+}
+
+.pagedjs_page:not(:first-of-type) {
+  --sidebar-width: 0rem;
+  --sidebar-background-color: #ffffff;
+  --main-width: calc(var(--content-width) - var(--sidebar-width));
+  --decorator-horizontal-margin: 0.1in;
+}
+```
+
+
+Aside
+================================================================================
+
+Contact Info {#contact}
+--------------------------------------------------------------------------------
+
+- <i class="fa fa-envelope"></i> gsumana.95@gmail.com
+- <i class="fa fa-phone"></i> +91 814-547-2829
+- <i class="fa fa-linkedin"></i> 
+[linkedin/Sumana_Giri](https://www.linkedin.com/in/sumana-giri-84511518b)
+- <i class="fa fa-github"></i> [github.com/Gsumana95](https://github.com/Gsumana95)
+
+
+--------------------------------------------------------------------------------
+
+
+```{r pressure, echo=FALSE, fig.cap="Sumana Giri",out.height="150px",out.width="300px"}
+
+knitr::include_graphics("Resume_plot3.png")
+```
+
+
+Skills {#skills}
+--------------------------------------------------------------------------------
+
+
+- Experienced in CL-BF IBNR Reserving(in Excel & R) Quarterly Analysis through Power BI dashboard
+
+- Skilled in Exploratory data analysis( GGplot, tidyverse), Statistical Modeling like Linear Regression, Logistic Regression and Generalized Linear Model (GLM, AIC )
+
+- Project Based experience on data modification in Python(Pandas, NumPy), Database management understanding through SQL( Join, Order By, select)
+
+- Excel efficiency(INDEX, MATCH, SUMIFS), SAS( PROC, SELECT)
+
+- Language : English, Hindi, Bengali, Spanish
+
+
+
+
+Disclaimer {#disclaimer}
+--------------------------------------------------------------------------------
+
+This resume was made with the [**R Packages**](https://github.com/rstudio/pagedown).
+Last updated on `r Sys.Date()`.
+
+
+
+Main
+================================================================================
+
+Sumana Giri {#title}
+--------------------------------------------------------------------------------
+
+### Looking for an actuarial opportunity preferably in Analytics/Pricing/Reserving
+
+
+
+Work Experience {data-icon=suitcase}
+--------------------------------------------------------------------------------
+
+### Actuarial Analyst
+
+Swiss Re Global Solution India Pvt Ltd.
+
+Bangalore, India
+
+June 2021--Till
+
+- Global IBNR Reserving for Australia Life & Health Group business.
+- Transformation of Excel calculation of methods like Loss Ratio, Chain Ladder, Bornhuetter-Ferguson to Global tool Prophet.
+- Regulatory reserves analysis with Power BI Dashboard.
+- Capture IBNR movement for Capital Management with various yield curve scenario(Inflation, Capital stress).
+- Worked with regional team on rationalizations of assumption(Termination, Loss Ratio, Inflation) during Covid with $1b target reserve.
+
+### Actuarial Intern
+
+Swiss Re Global Solution India Pvt Ltd.
+
+Bangalore, India
+
+Oct 2020--May 2021
+
+- Support Actuarial System team on cash flow checks and quarterly valuation.
+- Help in automation works using small macros, excel templates, R
+
+### Actuarial Intern
+
+United India Insurance Company
+
+Chennai, India
+
+May 2019--June 2019
+
+- Portfolio Analysis using Loss Ratio, Incurred claims, A/E ratios for cross sectional factors for all line of business( Motor, Health, Workman, Marine, Crop etc)
+- Prepared interactive Power BI dashboards and presented to team
+
+
+Actuarial Exams {data-icon=book}
+--------------------------------------------------------------------------------
+
+### Actuarial Statistics 1/Probablity
+
+GLM, Loss Distribution, Credibility theory, Hypothesis testing
+
+Society of Actuaries(SOA)
+
+April 2019
+
+### Financial Mathematics 
+
+Time Value of Money, Bonds, Loans, Determinants of Interest Rates
+
+Society of Actuaries(SOA)
+
+Feb 2023
+
+### VEE - Accounting and Finance
+Society of Actuaries(SOA)
+
+May 2023
+
+### VEE - Economics 
+Society of Actuaries(SOA)
+
+May 2023
+
+
+Education {data-icon=graduation-cap data-concise=true}
+--------------------------------------------------------------------------------
+
+### University of Madras
+
+Post Graduation in Actuarial Science
+
+Chennai, India
+
+Aug 2018--April 2020
+
+
+### University of Calcutta
+
+Under Graduation in Statisctics
+
+Kolkata, India
+
+Sep 2013--April 2016
+
+
+Projects {data-icon=pen}
+--------------------------------------------------------------------------------
+
+### Dissertation: Frequency-Severity GLM Modeling in Auto Insurance
+
+Modified models like Zero-Inflated Model and Hurdle Model along with standard Poisson-Gamma, Negative Binomial-Gamma.
+
+University of Madras
+
+March 2020
+
+
+### Predicting Employee Attrition in the Dawn of Recession
+
+Predicting the attrition of the employees to cut down under performing employees during this COVID-19 pandemic
+
+Kaggle Summer Analytics, IIT Guwahati
+
+April 2020
+
+### Credit Risk Modeling
+
+Predicting the customers to default in the credit payment using logistic regression Logistic regression using R. SMOTE algorithm for imbalance data
+
+Great Learning, Chennai
+
+June 2020
+
+Volunteering {data-icon=NULL}
+--------------------------------------------------------------------------------
+### Royal Statisticak Society
+- As student member helping member of various discussion panel and Research teams.
+
+RSS
+
+### IFOA GI Working Party
+- Helping Research works on new aspects of Analytics in Data Science, collaboration with various
+insurance professional of all groups working in Reserving, Capital Modeling etc
+
+IFOA
