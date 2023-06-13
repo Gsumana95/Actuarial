@@ -1,0 +1,428 @@
+---
+title: "Frequency Distribution"
+author: "Sumana Giri"
+date: "20/02/2020"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+``` 
+
+```{r}
+GLM_data_freq=read.csv(file="F://Project_doc//data file//GLM_data_freq_1.csv", sep=",",header=T)
+GLM_data_severity=read.csv(file="F://Project_doc//data file//GLM_data_severity.csv", sep=",",header=T)
+names(GLM_data_freq)
+```
+## Summary of the Dataset
+\n
+
+ CC_BAND_GROUP - Capacity of vehicle(<1000cc, 1000-2000,..)\n
+ AGE_FLOOR2 - Age of the vehicle(<1,2,3 etc)\n
+ FUEL_TYPE_GROUP - Type of fuel used(petrol, diesel)\n
+ VEHICLE_MAKE - SEVERAL TYPE OF PARTS USED BASED ON THEIR GRADES(1make,makeb,...)\n
+ ZERO_DEP_FLAG - DEPRECIATION ON PARTS CONSIDERED TO VALUE THE INSURED PRODUCT (yes,no)\n
+ FUEL_AGE_NILDEP  - combination of age,vehicle,dep variable
+\n
+
+```{r}
+summary(GLM_data_freq)
+```
+\n
+Here, the catagorical variables are not actually showing the summary measures. so we go for a frequency table summary for the response variable and other catagorical independent variables.
+## Frequency distribution of the data.
+\n (Truncating the values abovem the claim frequency 20)
+```{r}
+boxplot(GLM_data_freq$CLAIM_COUNT)
+tran_data=GLM_data_freq[which(GLM_data_freq$CLAIM_COUNT<20),]
+library(plyr)
+count(tran_data$CLAIM_COUNT)
+
+```
+We can see the above claim count 10 claim count is falling drastically.
+\n The shape of the claim frequency is highly positively skewed.
+## Summary of the numeric variable
+```{r}
+summary(GLM_data_freq[,c(8,9,10,11,12,14,16)])
+```
+
+## Catagorical Variables Frequency
+
+```{r,echo=FALSE}
+par(mfrow=c(1,2))
+barplot(table(GLM_data_freq$CC_BAND_GROUP),col=c("blue","red"),main="CAR CAPACITY")
+barplot(table(GLM_data_freq$AGE_FLOOR2),col=c("blue","red"),main="AGE OF Car")
+barplot(table(GLM_data_freq$FUEL_TYPE_GROUP),col=c("blue","red"),main="Fuel type")
+barplot(table(GLM_data_freq$NCB),col=c("blue","red"),main="NO_CLAIM_DISCOUNt")
+barplot(table(GLM_data_freq$IDV_BAND),col=c("blue","red"),main="Insured declared value" )
+barplot(table(GLM_data_freq$VEHICLE_MAKE),col=c("blue","red"),main="vehicle make")
+barplot(table(GLM_data_freq$zero_dep_flag),col=c("blue","red"),main="depreciation")
+par(mfrow=c(1,1))
+barplot(table(GLM_data_freq$FUEL_AGE_NILDEP),col=c("blue","red"),main="FUEL_AGE_DEpreciation")
+
+library(plyr)
+Cat_var=list("CAR_capacity"=GLM_data_freq[,2],"AGE_floor2"=GLM_data_freq[,3],"Fuel_type"=GLM_data_freq[,4],"NO_CLAIM_BONUS"=GLM_data_freq[,5],"ZERO_DEPRECIATION_OF_PARTS"=GLM_data_freq[,6],"INSURED_SUM"=GLM_data_freq[,7],"VEHICLE_MAKE"=GLM_data_freq[,13],"FUEL_AGE_NILDEP"=GLM_data_freq[,15])
+lapply(Cat_var,function(x)count(x))
+
+```
+
+Here we can see the frequency distibution of each of the catagorical variables.
+
+
+## Boxplot of the distribution
+```{r}
+attach(GLM_data_freq)
+boxplot(CLAIM_COUNT/POLICY_COUNT~ CC_BAND_GROUP,xlab="CC_BAND_GROUP",ylab="Avg_CLAIM_COUNt")
+boxplot(CLAIM_COUNT/POLICY_COUNT~ FUEL_TYPE_GROUP,xlab="FUEL_TYPE_GROUP",ylab="Avg_CLAIM_COUNt")
+boxplot(CLAIM_COUNT/POLICY_COUNT~ AGE_FLOOR2,xlab="AGE_FLOOR_2",ylab="Avg_CLAIM_COUNt")
+boxplot(CLAIM_COUNT/POLICY_COUNT~ VEHICLE_MAKE,xlab="VEHICLE_MaKE",ylab="Avg_CLAIM_COUNt")
+```
+## Cross tabulation 
+\n It is hwon how the cross tabulation is made to justify which levels of the catagorical variables make more significance in the data.
+\n
+### Fuel type,making of vehicle and capacity of vehicle
+
+```{r}
+t=table(GLM_data_freq$'FUEL_TYPE',GLM_data_freq$VEHICLE_MAKE,GLM_data_freq$'CC_BAND_GROUP')
+ftable(t)
+```
+\n
+### Fuel type, Age of vehicle and capacity of vehicle
+```{r}
+u=table(GLM_data_freq$'FUEL_TYPE',GLM_data_freq$AGE_FLOOR2,GLM_data_freq$'CC_BAND_GROUP')
+ftable(u)
+```
+
+\n
+## Correlation of nominal varible
+\n
+```{r}
+#install.packages("GoodmanKrushkal")
+
+library(GoodmanKruskal)
+varset=c("CC_BAND_GROUP","AGE_FLOOR2","FUEL_TYPE_GROUP","NCB","zero_dep_flag","IDV_BAND","VEHICLE_MAKE","FUEL_AGE_NILDEP")
+newdata=subset(GLM_data_freq,select=varset)
+cor_matrix=GKtauDataframe(newdata)
+plot(cor_matrix,corrColors="red")
+```
+We can see that the independece of the catagorical variable is quite well-maintained. The last variable is the combination of the few variables,so correlation between them is quite understandable.
+
+
+
+## Dist checking
+```{r}
+library(fitdistrplus) 
+descdist(GLM_data_freq$CLAIM_COUNT,discrete = TRUE) 
+```
+
+
+## Fitting a Basic GLM model on full variables set using poisson and negative binomial
+```{r}
+obj_pois_full=glm(CLAIM_COUNT~.,data=GLM_data_freq[,c(-1,-17,-18)],family=poisson(log))
+AIC(obj_pois_full)
+```
+
+
+```{r}
+#Taking offset as the NCB_adj_policy_count
+obj1=glm(CLAIM_COUNT~CC_BAND_GROUP+AGE_FLOOR2+FUEL_TYPE_GROUP+VEHICLE_MAKE+zero_dep_flag+offset(log(NCB_ADJ_POLICY_COUNT)), data=GLM_data_freq[,c(-1,-17)],family=poisson(log))
+
+AIC(obj1)
+```
+
+## Comparing the both model to check which moidel is the better one.
+\n Here we are using 'lmtest' will compare between full model and the selected variables' model
+
+```{r}
+
+library(lmtest)
+lrtest(obj_pois_full,obj1)      
+```
+\n ObSERVATION:
+\n Obviouly we can see that full model is not so significant. 
+\n We drop the following numeric variables- Written premium,  severiry_by_idv, severity, Insured_declared_value, policy count.
+\n As practiaclly it is understandable which are the effective variable set for the modeling.
+\n Car capacity(CC_BAND_GROUP)
+\n Age of the vehicle(AGE_FLOOR2)
+\n Type of the vehicle(vEHICLE_MAKE)
+\n depriciation included for parts or not (zero_dep_flag)
+\n policy count adjusted by no claim bonus (NCB_ADJ_POLICY_COUNT)
+
+```{r}
+##fitting of poisson glm on comination on combination of variable
+obj2=glm(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP+offset(log(NCB_ADJ_POLICY_COUNT)), data=GLM_data_freq[,c(-1,-17)],family=poisson(log))
+
+```
+\n
+Instead of using the set of differebt variables(FUEL_TYPE,AGE_of vehicle, depriciation flag), we can use the combination of the variable(FUEL_AGE_NILDEP), which considers the policy type more effieciently.
+```{r}
+##Fitting negative binomial in combination of variables(FUEL,AGE,Zero depreciation)
+
+obj4=glm.nb(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP+offset(log(NCB_ADJ_POLICY_COUNT)), data=GLM_data_freq[,c(-1,-17)])
+
+```
+Here we are fitting a negative binomial distribution to fit the data as the data is overdispersed.
+```{r}
+d=list("pois"=obj1,"pois_with_comb"=obj2,"negbin-with_offset"=obj4)
+sapply(d,function(x)AIC(x))
+```
+
+As we can see that the CLAIM_COUNT data contains 50% 0's we can consider some specially designed models.
+ 
+## Hurdle model
+\n We know Hurdle models are used for making the two different modeling for two parts of the data. Binomial distibution is fitted for the hurdle model & Poisson distribution for the positive count data(more than zero). Here two distibutions are modelled as independently.
+
+\n\n here we are going to do the model comparison between Poisson and Negative Binomial in hurdle model. 
+
+```{r}
+
+library("pscl")
+library("boot")
+#hurdle model with combination of variables with poisson dist
+
+ctrl <- hurdle.control(method = "L-BFGS-B")
+ctrl$reltol <- NULL
+hrd_p2=hurdle(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=GLM_data_freq,dist="poisson",zero.dist = "binomial",link="logit",control=ctrl)
+
+#hurdle poisson model with offset
+ctrl <- hurdle.control(method = "L-BFGS-B")
+ctrl$reltol <- NULL
+hrd_p4=hurdle(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=GLM_data_freq,offset = log(NCB_ADJ_POLICY_COUNT),dist="poisson",zero.dist = "binomial",link="logit",control=ctrl)
+
+
+#hurdle model with combination of variables with negative binomial
+ctrl <- hurdle.control(method = "L-BFGS-B")
+ctrl$reltol <- NULL
+hrd_nb2=hurdle(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=GLM_data_freq,dist="negbin",zero.dist = "binomial",link="logit",control=ctrl)
+
+#hurdle model with combination of variables
+ctrl <- hurdle.control(method = "L-BFGS-B")
+ctrl$reltol <- NULL
+hrd_nb4=hurdle(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=GLM_data_freq,offset = log(NCB_ADJ_POLICY_COUNT),dist="negbin",zero.dist = "binomial",link="logit",control=ctrl)
+
+```
+
+
+
+## AIC comparison of poisson and negative binomial with and without offset
+```{r}
+h1=list("Hrd_pois"=hrd_p2,"Hrd_pois_With_offset"=hrd_p4,"Hrd_NB"=hrd_nb2,"Hrd_NB_with_offset"=hrd_nb4)
+
+sapply(h1,function(x)AIC(x))
+```
+we can see that the AIC measure is good for performing the model comparison. we can see that AIC value of negative binomial with offset is more better. 
+
+## Zero inflated Distribution 
+\n
+Zero Inflated distributions are used for count data with more number of zeros. 
+\n Here both types of zeros are used like structural and actual zeros.
+
+```{r}
+#Poisson
+zip2= zeroinfl(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=GLM_data_freq,dist="poisson",link="logit", control=zeroinfl.control("BFGS"))
+
+
+#negative binomial
+zinb4= zeroinfl(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=GLM_data_freq,dist="negbin",link="logit", control=zeroinfl.control("BFGS"))
+
+```
+
+### Testing which model is better using "voung test"
+```{r,echo=FALSE}
+vuong(zip2,zinb4)
+```
+\n We can see that the Zero inflated model using negative binomial is more fitted in this data. but as we can see because of the long tail we cannot get the desired precision in the model.
+
+
+## Table Comparison of models
+\n Here we are comparing the zero inflated poisson and zero-inflated negative binomial with Poisson Hurdle model and Negative binomial Hurdle model 
+```{r}
+k=list("pois"=obj2,"negbin"=obj4,"Hurdle_pois"=hrd_p4,"Hurdle_negbin"=hrd_nb4,"zero_inf_pois"=zip2,"zero_inf_negbin"=zinb4)
+#sapply(k,function(x)coef(x))
+sapply(k,function(x)AIC(x))
+```
+
+
+
+\n As we can see that the AIC score is too high for whole dataset as there is a long tailed and dataset is excessively huge for the Zero-inflated and hurdle models' requirement.
+\n we now are trying for a sample dataset.
+\n We took 1000 sample from the dataset and try to fit normal poisson linear model,negative binomial,hurdle,zero inflated model.
+
+```{r}
+set.seed(1999)
+s=sample(1:nrow(GLM_data_freq),1000,replace = FALSE)
+samp=GLM_data_freq[s,]
+
+count(samp$CLAIM_COUNT[samp$CLAIM_COUNT<5])/1000
+
+hist(samp$CLAIM_COUNT,breaks = 200)
+
+Cat_var=list("CAR_capacity"=samp[,2],"AGE_Of_VEHICLE"=samp[,3],"Fuel_type"=samp[,4],"NO_CLAIM_BONUS"=samp[,5],"ZERO_DEPRECIATION_OF_PARTS"=samp[,6],"INSURED_SUM"=samp[,7],"VEHICLE_MAKE"=samp[,13],"FUEL_AGE_NILDEP"=samp[,15])
+
+lapply(Cat_var,function(x)count(x))
+```
+## COMPARISON OF MODELS on Sample data.
+```{r,echo=FALSE}
+
+zip2= zeroinfl(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=samp,dist="poisson",link="logit", control=zeroinfl.control("L-BFGS-B"))
+
+ctrl <- zeroinfl.control(method = "L-BFGS-B")
+ctrl$reltol <- NULL
+zinb4= zeroinfl(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=samp,dist="negbin",link="logit", control=ctrl)
+
+ctrl <- hurdle.control(method = "L-BFGS-B")
+ctrl$reltol <- NULL
+hrd_p2=hurdle(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=samp,dist="poisson",zero.dist = "binomial",link="logit",control=ctrl)
+
+
+ctrl <- hurdle.control(method = "L-BFGS-B")
+ctrl$reltol <- NULL
+hrd_nb4=hurdle(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=samp,dist="negbin",zero.dist = "binomial",link="logit",control=ctrl)
+
+
+obj2=glm(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP+offset(log(NCB_ADJ_POLICY_COUNT)), data=samp[,c(-1,-17)],family=poisson(log))
+
+library(MASS)
+obj4=glm.nb(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP+offset(log(NCB_ADJ_POLICY_COUNT)), data=samp[,c(-1,-17)])
+
+
+
+k=list("pois"=obj2,"negbin"=obj4,"Hurdle_pois"=hrd_p2,"Hurdle_negbin"=hrd_nb4,"zero_inf_pois"=zip2,"zero_inf_negbin"=zinb4)
+
+sapply(k,function(x)AIC(x))
+
+```
+
+In this dataset because of the long tail distribution is overdispersed. So, only negative Binomial can be give a better result with this distribution.
+### Using truncated data below "CLAIM_COUNT<20"
+```{r,echo=FALSE}
+
+tran_data=GLM_data_freq[which(GLM_data_freq$CLAIM_COUNT<20),]
+
+
+zip2= zeroinfl(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=tran_data,dist="poisson",link="logit", control=zeroinfl.control("BFGS"))
+
+
+zinb4= zeroinfl(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=tran_data,dist="negbin",link="logit", control=zeroinfl.control("L-BFGS-B"))
+
+
+ctrl <- hurdle.control(method = "L-BFGS-B")
+ctrl$reltol <- NULL
+hrd_p2=hurdle(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=tran_data,dist="poisson",zero.dist = "binomial",link="logit",control=ctrl)
+
+
+ctrl <- hurdle.control(method = "L-BFGS-B")
+ctrl$reltol <- NULL
+hrd_nb4=hurdle(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=tran_data,dist="negbin",zero.dist = "binomial",link="logit",control=ctrl)
+
+
+obj2=glm(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP+offset(log(NCB_ADJ_POLICY_COUNT)), data=tran_data[,c(-1,-17)],family=poisson(log))
+
+
+library(MASS)
+obj4=glm.nb(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP+offset(log(NCB_ADJ_POLICY_COUNT)), data=tran_data[,c(-1,-17)])
+
+
+k=list("pois"=obj2,"negbin"=obj4,"Hurdle_pois"=hrd_p2,"Hurdle_negbin"=hrd_nb4,"zero_inf_pois"=zip2,"zero_inf_negbin"=zinb4)
+
+sapply(k,function(x)AIC(x))
+```
+
+
+We can see the negetive binomial is showing better result for the data. But as the dataset is still big we can't take the results.
+here we can take a sample of n and try to fit the distribution.
+## Taking a sample of 1000 from the truncated data.
+```{r}
+set.seed(5000)
+
+s=sample(1:nrow(tran_data),2000,replace = FALSE)
+samp1=tran_data[s,]
+
+library(plyr)
+Cat_var=list("CAR_capacity"=samp1[,2],"AGE_Of_VEHICLE"=samp1[,3],"Fuel_type"=samp1[,4],"NO_CLAIM_BONUS"=samp1[,5],"ZERO_DEPRECIATION_OF_PARTS"=samp1[,6],"INSURED_SUM"=samp1[,7],"VEHICLE_MAKE"=samp1[,13],"FUEL_AGE_NILDEP"=samp1[,15])
+
+lapply(Cat_var,function(x)count(x))
+
+```
+
+## Comparation between the models trained on the sample.
+```{r,echo=FALSE}
+zip2= zeroinfl(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=samp1,dist="poisson",link="logit", control=zeroinfl.control("L-BFGS-B"))
+
+
+zinb4= zeroinfl(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=samp1,dist="negbin",link="logit", control=zeroinfl.control("L-BFGS-B"))
+
+
+ctrl <- hurdle.control(method = "L-BFGS-B")
+ctrl$reltol <- NULL
+hrd_p2=hurdle(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=samp1,dist="poisson",zero.dist = "binomial",link="logit",control=ctrl)
+
+ctrl <- hurdle.control(method = "L-BFGS-B")
+ctrl$reltol <- NULL
+hrd_nb4=hurdle(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=samp1,dist="negbin",zero.dist = "binomial",link="logit",control=ctrl)
+
+obj2=glm(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP+offset(log(NCB_ADJ_POLICY_COUNT)), data=samp1[,c(-1,-17)],family=poisson(log))
+
+
+library(MASS)
+obj4=glm.nb(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP+offset(log(NCB_ADJ_POLICY_COUNT)), data=samp1[,c(-1,-17)])
+
+
+k=list("pois"=obj2,"negbin"=obj4,"Hurdle_pois"=hrd_p2,"Hurdle_negbin"=hrd_nb4,"zero_inf_pois"=zip2,"zero_inf_negbin"=zinb4)
+
+
+sapply(k,function(x)AIC(x))
+```
+
+
+
+## Severity Modeling
+severity is the avaerage claim amount.
+\n
+```{r}
+hist(GLM_data_severity$Severity_by_IDV)
+```
+
+```{r, echo=FALSE}
+library(fitdistrplus) 
+descdist(GLM_data_severity$Severity_by_IDV)
+```
+
+## Fit gamma distribution in the data.
+\n
+we are training the severity models using gamma and inverse gaussian.
+```{r,echo=FALSE}
+obj_sev1=glm(Severity_by_IDV~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP, family=Gamma(link=log),data=samp1[samp1$Severity>0,])
+
+obj_sev2=glm(Severity_by_IDV~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP, family=inverse.gaussian(link=log),data=samp1[samp1$Severity>0,])
+
+#fitting glm of severity to whole data
+obj_g=glm(Severity_by_IDV~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP, family=Gamma(link=log),data=GLM_data_severity[GLM_data_severity$Severity>0,])
+
+obj_ig=glm(Severity_by_IDV~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP, family=inverse.gaussian("log"),data=GLM_data_severity[GLM_data_severity$Severity>0,])
+
+w=list("gamma_s"=obj_sev1,"inv_g"=obj_sev2,"Gamma_data"=obj_g, "Inv.gauss"=obj_ig)
+sapply(w,function(x)AIC(x))
+
+```
+\n We can see that the sample data follows have more fit for gamma distribution.
+\n
+## With weights (CLAIM_COUNT)
+\n Weights are used to make the response variable more relevant. here the claim counts are used as weights in the model.
+\n
+```{r}
+obj_sev1=glm(Severity_by_IDV~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP, family=Gamma(link=log),data=samp1[samp1$Severity>0,],weights = CLAIM_COUNT)
+
+obj_sev2=glm(Severity_by_IDV~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP, family=inverse.gaussian(link=log),data=samp1[samp1$Severity>0,],weights = CLAIM_COUNT)
+
+#fitting glm of severity to whole data
+obj_g=glm(Severity_by_IDV~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP, family=Gamma(link=log),data=GLM_data_severity[GLM_data_severity$Severity>0,],weights = CLAIM_COUNT)
+
+obj_ig=glm(Severity_by_IDV~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP, family=inverse.gaussian("log"),data=GLM_data_severity[GLM_data_severity$Severity>0,],weights = CLAIM_COUNT)
+w=list("gamma_s"=obj_sev1,"inv_g"=obj_sev2,"Gamma_data"=obj_g, "Inv.gauss"=obj_ig)
+
+sapply(w,function(x)AIC(x))
+```
+

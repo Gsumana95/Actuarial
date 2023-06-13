@@ -1,0 +1,111 @@
+---
+title: "Futher Analysis"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(comment = NA)
+```
+
+## Mean_variance Relation
+
+
+```{r echo=FALSE}
+GLM_data_freq=read.csv(file="F://Project_doc//data file//GLM_data_freq_1.csv", sep=",",header=T)
+with(GLM_data_freq, c(mean = mean(CLAIM_COUNT), var = var(CLAIM_COUNT), ratio = var(CLAIM_COUNT) / mean(CLAIM_COUNT)))
+
+```
+
+## Histogram of CLAIM DATA and transformed data
+
+```{r , echo=FALSE}
+attach(GLM_data_freq)
+t=factor(CLAIM_COUNT,levels=0:20)
+clm.tab=table(t)
+clm.tab
+par(mfrow=c(1,2))
+barplot(clm.tab, xlab = "Number of CLAIMS", ylab = "Frequency",col = "lightblue")
+
+abline(v = mean(CLAIM_COUNT), col = "red", lwd = 3)
+ci <- mean(CLAIM_COUNT) + c(-1, 1) * sd(CLAIM_COUNT)
+lines(x = ci, y = c(-4, -4), col = "red", lwd = 3, xpd = TRUE)
+
+barplot(clm.tab , ylab = "log(Frequency)", xlab = "NUmber of CLAIMs", col = "lightblue", log = "y")
+abline(v = mean(CLAIM_COUNT), col = "red", lwd = 3)
+ci <- mean(CLAIM_COUNT) + c(-1, 1) * sd(CLAIM_COUNT)
+lines(x = ci, y = c(-4, -4), col = "red", lwd = 3, xpd = TRUE)
+ 
+```
+
+Barplots showing the frequency distribution of Number of Claim Count. 
+Left: raw scale; right: a log scale makes the smaller counts more visible. The vertical red
+lines show the mean and horizontal lines show mean ±1 standard deviation.
+```{r,echo=FALSE}
+library(ggplot2)
+ggplot(GLM_data_freq, aes(VEHICLE_MAKE, CLAIM_COUNT )) + geom_jitter(position = position_jitter(h = 0.05)) +stat_smooth(method = "loess", size = 2, fill = "blue", alpha = 0.25)+ stat_smooth(method = "glm", color = "red", size = 1.25, se = FALSE) 
+```
+
+```{r,echo=FALSE}
+tran_data=GLM_data_freq[which(GLM_data_freq$CLAIM_COUNT<20),]
+
+
+
+
+
+obj2=glm(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP+offset(log(NCB_ADJ_POLICY_COUNT)), data=tran_data[,c(-1,-17)],family=poisson(log))
+
+
+library(MASS)
+obj4=glm.nb(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP+offset(log(NCB_ADJ_POLICY_COUNT)), data=tran_data[,c(-1,-17)])
+
+
+library(effects)
+
+plot(allEffects(obj4), band.colors = "blue", lwd = 1,
+ ylab = "CLAIM_COUNT", main = "")
+```
+
+### neg
+
+### Rootogram
+The rootogram is a graphical tool associated with the work of J. W.
+Tukey that was originally used for assessing goodness of fit of univariate distributions.
+Here, we extend the rootogram to regression models and show that this is particularly useful for diagnosing and treating issues such as overdispersion and/or excess zeros in count data models. We also introduce a weighted version of the rootogram that can be applied out of sample or to (weighted) subsets of the data, for example, in finite mixture models.
+
+
+```{r,echo=FALSE}
+library(pscl)
+zip2= zeroinfl(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=tran_data,dist="poisson",link="logit", control=zeroinfl.control("BFGS"))
+
+
+zinb4= zeroinfl(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=tran_data,dist="negbin",link="logit", control=zeroinfl.control("L-BFGS-B"))
+
+
+ctrl <- hurdle.control(method = "L-BFGS-B")
+ctrl$reltol <- NULL
+hrd_p2=hurdle(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=tran_data,dist="poisson",zero.dist = "binomial",link="logit",control=ctrl)
+
+
+ctrl <- hurdle.control(method = "L-BFGS-B")
+ctrl$reltol <- NULL
+hrd_nb4=hurdle(CLAIM_COUNT~CC_BAND_GROUP+VEHICLE_MAKE+FUEL_AGE_NILDEP,data=tran_data,dist="negbin",zero.dist = "binomial",link="logit",control=ctrl)
+library(MASS)
+library(countreg)
+par(mfrow=c(1,2))
+ countreg::rootogram(obj2, max = 20,main = "GLM: Poisson")
+ countreg::rootogram(obj4, max = 20, main = "GLM: Negative-Binomial")
+ rootogram(zip2, max = 20,main = "Zero Inflated Poisson")
+ countreg::rootogram(zinb4, max = 20, main = "Zero Inflated Negative Binomial")
+ rootogram(hrd_p2, max = 20,main = "Hurdle Poisson")
+ countreg::rootogram(hrd_nb4, max = 20, main = "Hurdle Negative Binomial")
+
+```
+```{r}
+obj2=glm(CLAIM_COUNT ~ CC_BAND_GROUP + AGE_FLOOR2 + FUEL_TYPE_GROUP + VEHICLE_MAKE + zero_dep_flag + offset (log (NCB_ADJ_POLICY_COUNT)),data=GLM_data_freq[,c(-1,-17)],family=poisson(log))
+
+
+```
+### hurdle model
